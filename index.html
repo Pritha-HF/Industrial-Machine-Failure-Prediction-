@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Industrial Machine Failure Prediction System</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --safe: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    body {
+      background: radial-gradient(circle at top right, #1e293b, #0f172a 65%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1020px;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem; }
+
+    .model-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .badge {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .presets { display: flex; gap: 0.5rem; }
+    .preset-btn {
+      background: #0f172a;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .preset-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+
+    input, select {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .submit-btn {
+      margin-top: 1.25rem;
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover { background: var(--accent-hover); }
+    .submit-btn:active { transform: scale(0.99); }
+
+    .result-box {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      border-radius: 12px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+
+    .status-text { font-size: 1.45rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .risk-pill {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .prob-wrapper { margin-top: 1.25rem; text-align: left; }
+    .prob-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .progress-track {
+      height: 12px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--safe);
+      transition: width 0.5s ease, background 0.3s ease;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .tele-card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      text-align: center;
+    }
+    .tele-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
+    .tele-value { font-size: 1.05rem; font-weight: 700; margin-top: 0.25rem; color: var(--accent); }
+
+    .safe { color: var(--safe); }
+    .danger { color: var(--danger); }
+    .warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Industrial Machine Failure Prediction</h1>
+        <p>MCA PBL Project (SEC - C) • AI4I 2020 Predictive Maintenance System</p>
+      </div>
+      <div class="model-badges">
+        <span class="badge">Model: {{ metrics.model_name }}</span>
+        <span class="badge">Test F1: {{ metrics.f1_score }}%</span>
+        <span class="badge">ROC-AUC: {{ metrics.roc_auc }}%</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="card-title">
+          <span>Sensor Telemetry Input</span>
+          <div class="presets">
+            <button type="button" class="preset-btn" onclick="loadPreset('normal')">Normal Sample</button>
+            <button type="button" class="preset-btn" onclick="loadPreset('failure')">Failure Sample</button>
+          </div>
+        </div>
+
+        <form id="predictForm">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="type">Machine Quality Category (Type)</label>
+              <select id="type" required>
+                <option value="L">L — Low Quality Variant</option>
+                <option value="M" selected>M — Medium Quality Variant</option>
+                <option value="H">H — High Quality Variant</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="air_temp">Air Temperature [K]</label>
+              <input type="number" id="air_temp" step="0.1" value="300.0" required />
+            </div>
+
+            <div class="field">
+              <label for="proc_temp">Process Temperature [K]</label>
+              <input type="number" id="proc_temp" step="0.1" value="310.0" required />
+            </div>
+
+            <div class="field">
+              <label for="rot_speed">Rotational Speed [rpm]</label>
+              <input type="number" id="rot_speed" step="1" value="1500" required />
+            </div>
+
+            <div class="field">
+              <label for="torque">Torque [Nm]</label>
+              <input type="number" id="torque" step="0.1" value="40.0" required />
+            </div>
+
+            <div class="field full">
+              <label for="tool_wear">Tool Wear [min]</label>
+              <input type="number" id="tool_wear" step="1" value="100" required />
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Run Failure Diagnostics</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-title"><span>Diagnostic Output</span></div>
+
+        <div class="result-box">
+          <div id="statusText" class="status-text" style="color: var(--muted);">Awaiting Input...</div>
+          <div id="riskPill" class="risk-pill" style="background: #1e293b; color: var(--muted);">READY</div>
+
+          <div class="prob-wrapper">
+            <div class="prob-header">
+              <span>Estimated Failure Probability</span>
+              <strong id="probValue">0.00%</strong>
+            </div>
+            <div class="progress-track">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-title" style="font-size: 0.9rem; margin-bottom: 0.75rem;">
+          <span>Engineered Physics Features</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="tele-card">
+            <div class="tele-label">Temp Diff</div>
+            <div id="tempDiff" class="tele-value">-- K</div>
+          </div>
+          <div class="tele-card">
+            <div class="tele-label">Mech. Power</div>
+            <div id="powerVal" class="tele-value">-- W</div>
+          </div>
+          <div class="tele-card">
+            <div class="tele-label">Overstrain</div>
+            <div id="overstrainVal" class="tele-value">--</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    function loadPreset(mode) {
+      if (mode === 'normal') {
+        document.getElementById('type').value = 'M';
+        document.getElementById('air_temp').value = '300.0';
+        document.getElementById('proc_temp').value = '310.0';
+        document.getElementById('rot_speed').value = '1500';
+        document.getElementById('torque').value = '40.0';
+        document.getElementById('tool_wear').value = '100';
+      } else {
+        document.getElementById('type').value = 'L';
+        document.getElementById('air_temp').value = '302.5';
+        document.getElementById('proc_temp').value = '310.5';
+        document.getElementById('rot_speed').value = '1350';
+        document.getElementById('torque').value = '62.0';
+        document.getElementById('tool_wear').value = '210';
+      }
+    }
+
+    document.getElementById('predictForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.textContent = 'Analyzing...';
+      btn.disabled = true;
+
+      const payload = {
+        type: document.getElementById('type').value,
+        air_temp: document.getElementById('air_temp').value,
+        proc_temp: document.getElementById('proc_temp').value,
+        rot_speed: document.getElementById('rot_speed').value,
+        torque: document.getElementById('torque').value,
+        tool_wear: document.getElementById('tool_wear').value
+      };
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Prediction failed');
+
+        const statusEl = document.getElementById('statusText');
+        const riskEl = document.getElementById('riskPill');
+        const fillEl = document.getElementById('progressFill');
+
+        statusEl.textContent = data.label;
+        document.getElementById('probValue').textContent = `${data.probability.toFixed(2)}%`;
+        fillEl.style.width = `${Math.min(data.probability, 100)}%`;
+
+        if (data.failure) {
+          statusEl.style.color = 'var(--danger)';
+          riskEl.style.background = 'rgba(239, 68, 68, 0.18)';
+          riskEl.style.color = 'var(--danger)';
+          fillEl.style.background = 'var(--danger)';
+        } else if (data.probability >= 20) {
+          statusEl.style.color = 'var(--warn)';
+          riskEl.style.background = 'rgba(245, 158, 11, 0.18)';
+          riskEl.style.color = 'var(--warn)';
+          fillEl.style.background = 'var(--warn)';
+        } else {
+          statusEl.style.color = 'var(--safe)';
+          riskEl.style.background = 'rgba(34, 197, 94, 0.18)';
+          riskEl.style.color = 'var(--safe)';
+          fillEl.style.background = 'var(--safe)';
+        }
+
+        riskEl.textContent = data.risk;
+        document.getElementById('tempDiff').textContent = `${data.physics.temp_diff} K`;
+        document.getElementById('powerVal').textContent = `${data.physics.power_w} W`;
+        document.getElementById('overstrainVal').textContent = `${data.physics.overstrain}`;
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.textContent = 'Run Failure Diagnostics';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
