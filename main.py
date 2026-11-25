@@ -24,7 +24,7 @@ from sklearn.metrics import (
 
 sns.set_theme(style="whitegrid", context="notebook", palette="muted")
 
-url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv"
+url = "https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance"
 df = pd.read_csv(url)
 
 print("=" * 60)
